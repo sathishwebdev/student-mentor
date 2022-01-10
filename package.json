@@ -1,0 +1,24 @@
+{
+  "name": "student-mentor",
+  "version": "1.0.0",
+  "description": "student-mentor is an api which helps to assign a mentor to students.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "test sm"
+  },
+  "keywords": [
+    "api"
+  ],
+  "author": "sathishwebdev",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.2",
+    "mongodb": "^4.3.0",
+    "nodemon": "^2.0.15"
+  }
+}
