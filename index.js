@@ -29,11 +29,13 @@ const MONGO_URL = process.env.DB_URL
 app.use('/students', studentsRouter)
 app.use('/mentors', mentorsRouter)
 
+//  it will reassign all students
+
 app.put('/reassign', async (req, res)=>{
     const students = await client
         .db('mentoralot')
         .collection('students')
-        .find()
+        .find() 
         .toArray(), 
         mentors = await client
         .db("mentoralot")
@@ -47,22 +49,28 @@ app.put('/reassign', async (req, res)=>{
     let num = S/M // number of students gonna assign per mentor
     let menCop = mentors
     let stuCop = students
-   let result =[]
+    
+    num = `${num}`
+    num = num.split('.')
+    num = !num[1]? +num.join('') : +num[0] + 1
+
     // logic loop
 
     menCop.forEach( ({name, mentorId, mentorName,students})=>{ // mentor loop 2 time
         let dataForMentor = []
-        // student loop 4 times
+        // student loop num times
         for(let stuLoop = i ;stuLoop< i + num; stuLoop++){
-            dataForMentor.push({name : stuCop[stuLoop].name, studentId : stuCop[stuLoop].studentId, studentName : stuCop[stuLoop].studentName})
+           
+           if(!stuCop[stuLoop]){
+             break;
+           }
+           else{ dataForMentor.push({name : stuCop[stuLoop].name, studentId : stuCop[stuLoop].studentId, studentName : stuCop[stuLoop].studentName})
             
             let updateStudent =  client
                 .db('mentoralot')
                 .collection('students')
-                .updateOne({studentId : `220${stuLoop}`},{$set: {mentorDetails : {name, mentorId, mentorName}, mentoralot : true}})
-
-  
-
+                .updateOne({studentId : `220${stuLoop+1}`},{$set: {mentorDetails : {name, mentorId, mentorName}, mentoralot : true}})
+            }
         }
 
         let updateMentor =  client
@@ -76,6 +84,69 @@ app.put('/reassign', async (req, res)=>{
     
     
 res.send({message: "auto assign done"})
+        
+})
+
+//  assign unassigned one
+
+app.put('/assign', async (req, res)=>{
+    const students = await client
+        .db('mentoralot')
+        .collection('students')
+        .find({mentoralot : false}) 
+        .toArray(), 
+        mentors = await client
+        .db("mentoralot")
+        .collection("mentors")
+        .find()
+        .toArray()
+
+    let i = 0  // initialize the loop with 0 @ start
+    let S = students.length // number of students
+    let M = mentors.length // number of menotrs
+    let num = S/M // number of students gonna assign per mentor
+    let menCop = mentors
+    let stuCop = students, result=[];
+    
+    num = `${num}`
+    num = num.split('.')
+    num = !num[1]? +num.join('') : +num[0] + 1
+
+    console.log(S, M , num)
+    // logic loop
+if(S > 0){
+    menCop.forEach( ({name, mentorId, mentorName,students})=>{ // mentor loop 2 time
+        let dataForMentor = [...students]
+        // student loop num times
+        for(let stuLoop = i ;stuLoop< i + num; stuLoop++){
+           
+           if(!stuCop[stuLoop]){
+             break;
+           }
+           else{ dataForMentor.push({name : stuCop[stuLoop].name, studentId : stuCop[stuLoop].studentId, studentName : stuCop[stuLoop].studentName})
+            
+            let updateStudent =  client
+                .db('mentoralot')
+                .collection('students')
+                .updateOne({studentId : `220${stuLoop+1}`},{$set: {mentorDetails : {name, mentorId, mentorName}, mentoralot : true}})
+            }
+        }
+
+        let updateMentor =  client
+        .db('mentoralot')
+        .collection('mentors')
+        .updateOne({mentorId}, {$set:{students: dataForMentor, numOfStudents: dataForMentor.length}})
+
+        i = i+num
+       result = [...result, ...dataForMentor]
+    })
+    res.send({message: "auto assign done", data: result})
+}else{
+    res.send({message: "all are assigned already"})
+}
+    
+    
+
         
 })
 
