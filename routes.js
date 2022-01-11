@@ -39,6 +39,22 @@ routeForStudent
 }
 })
 
+
+// get unassigned students
+routeForStudent
+.route('/unassign')
+.get(async (req, res)=>{
+    let studentData = await client
+        .db("mentoralot")
+        .collection("students")
+        .find({mentoralot: false})
+        .toArray()
+
+    res.send({data: studentData, totalStudents : studentData.length})
+})
+
+
+
 // get by name
 
 routeForStudent
@@ -53,29 +69,47 @@ routeForStudent
 
     studentData.length === 0? res.status(400).send({message:"invalid"}) : res.send({result: true, data: studentData})
 })
+
+
 // assign a mentor for student 
-// select one student and assign one mentor or change the mentor 
+// select one student and assign one mentor
 .put(async (req, res)=>{
     let mentorData = req.body
-    let assignMentor = await client
-        .db("mentoralot")
-        .collection("students")
-        .updateOne({studentName: req.params.name },{$set : {mentorDetails:{...mentorData},mentoralot: true } })
-    res.send(assignMentor)
-})
 
-// get unassigned students
-routeForStudent
-.route('/unassign')
-.get(async (req, res)=>{
-    let studentData = await client
+    let [studentData] = await client
         .db("mentoralot")
         .collection("students")
-        .find({mentoralot: false})
+        .find({studentName : req.params.name})
+        .toArray()
+    let [mentor] = await client
+            .db("mentoralot")
+            .collection('mentors')
+            .find({mentorName : req.body.mentorName })
+            .toArray()
+    
+    if(!studentData.mentoralot){
+        let assignMentor = await client
+        .db("mentoralot")
+        .collection("students")
+        .updateOne({studentName: req.params.name },{$set : {mentorDetails:{...mentorData},mentoralot: true } }) 
+        
+        let stuForMen = [...mentor.students, {studentName : studentData.studentName, studentId : studentData.studentId, name : studentData.name } ]
+
+        let assignStudent = await client
+        .db("mentoralot")
+        .collection('mentors')
+        .updateOne({mentorName : req.body.mentorName}, {$set : { students: stuForMen, numOfStudents : stuForMen.length} })        
+
+        let [student] = await client
+        .db("mentoralot")
+        .collection("students")
+        .find({studentName : req.params.name})
         .toArray()
 
-    res.send({data: studentData, totalStudents : studentData.length})
+        res.send({result: true, response : {assignMentor, assignStudent}, data : student })
+    }else{res.status(400).send({result : false, message: "invalid"})}
 })
+
 
 
 
@@ -129,8 +163,6 @@ export const studentsRouter = routeForStudent
 
 //  get mentors
 
-//  one query at a time
-
 routeForMentor
 .route('/')
 .get(async (req, res)=>{
@@ -175,6 +207,19 @@ routeForMentor
     .toArray()
     
     res.status(200).send({result: true, data: mentorData})
+})
+
+routeForMentor
+.route('/students/:mentorname')
+.get(async (req, res)=>{
+    let name = req.params.mentorname
+    let studentData = await client
+        .db("mentoralot")
+        .collection("mentors")
+        .find({mentorName : name})
+        .toArray()
+
+    studentData.length === 0? res.status(400).send({message:"invalid"}) : res.send({result: true, data: studentData[0].students})
 })
 
 

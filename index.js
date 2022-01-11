@@ -29,7 +29,7 @@ const MONGO_URL = process.env.DB_URL
 app.use('/students', studentsRouter)
 app.use('/mentors', mentorsRouter)
 
-app.put('/auto-assign', async (req, res)=>{
+app.put('/reassign', async (req, res)=>{
     const students = await client
         .db('mentoralot')
         .collection('students')
@@ -51,10 +51,10 @@ app.put('/auto-assign', async (req, res)=>{
     // logic loop
 
     menCop.forEach( ({name, mentorId, mentorName,students})=>{ // mentor loop 2 time
-        let dataForMentor = [...students]
+        let dataForMentor = []
         // student loop 4 times
         for(let stuLoop = i ;stuLoop< i + num; stuLoop++){
-            dataForMentor.push({name : stuCop[i].name, studentId : stuCop[i].studentId, studentName : stuCop[i].studentName})
+            dataForMentor.push({name : stuCop[stuLoop].name, studentId : stuCop[stuLoop].studentId, studentName : stuCop[stuLoop].studentName})
             
             let updateStudent =  client
                 .db('mentoralot')
