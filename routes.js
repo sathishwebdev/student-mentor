@@ -208,6 +208,37 @@ routeForMentor
     
     res.status(200).send({result: true, data: mentorData})
 })
+.put(async (req, res)=>{
+    let studentData = req.body
+
+    let [mentorData] = await client
+        .db("mentoralot")
+        .collection("mentors")
+        .find({mentorName : req.params.name})
+        .toArray() 
+    
+       studentData.forEach(async student =>{ 
+        let assignMentor = await client
+        .db("mentoralot")
+        .collection("students")
+        .updateOne({studentName: student.name },{$set : {mentorDetails:{mentorId : mentorData.mentorId, mentorName : mentorData.mentorName, name : mentorData.name},mentoralot: true } }) 
+        })
+        let stuForMen = [...mentorData.students, ...studentData ]
+
+        let assignStudent = await client
+        .db("mentoralot")
+        .collection('mentors')
+        .updateOne({mentorName : req.params.name}, {$set : { students: stuForMen, numOfStudents : stuForMen.length} })        
+
+        let [mentor] = await client
+        .db("mentoralot")
+        .collection("mentors")
+        .find({mentorName : req.params.name})
+        .toArray()
+
+        res.send({result: true, response : { assignStudent}, data : mentor })
+    // }res.status(400).send({result : false, message: "invalid"})}
+})
 
 routeForMentor
 .route('/students/:mentorname')

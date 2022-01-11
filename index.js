@@ -112,7 +112,8 @@ app.put('/assign', async (req, res)=>{
     num = num.split('.')
     num = !num[1]? +num.join('') : +num[0] + 1
 
-    console.log(S, M , num)
+    console.log(S,M,num)
+
     // logic loop
 if(S > 0){
     menCop.forEach( ({name, mentorId, mentorName,students})=>{ // mentor loop 2 time
@@ -128,7 +129,7 @@ if(S > 0){
             let updateStudent =  client
                 .db('mentoralot')
                 .collection('students')
-                .updateOne({studentId : `220${stuLoop+1}`},{$set: {mentorDetails : {name, mentorId, mentorName}, mentoralot : true}})
+                .updateOne({studentId : stuCop[stuLoop].studentId},{$set: {mentorDetails : {name, mentorId, mentorName}, mentoralot : true}})
             }
         }
 
